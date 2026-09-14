@@ -11,7 +11,6 @@ export interface FieldOptions {
   readonly name: string
   readonly legend: string
   readonly presets: readonly AspectRatio[]
-  /** null = no chip selected */
   readonly initial: RatioInput | null
   readonly onChange: (input: RatioInput) => void
 }
@@ -20,9 +19,7 @@ export interface Field {
   readonly element: HTMLFieldSetElement
   select(input: RatioInput | null): void
   setStatus(status: FieldStatus): void
-  /** Small muted text next to the legend, e.g. the detected screen. */
   setLegendNote(text: string | null): void
-  /** Focuses the selected chip, or the first one. */
   focus(): void
 }
 
@@ -41,7 +38,7 @@ export function createField(options: FieldOptions): Field {
 
   const chips: HTMLDivElement = h('div', { class: 'chips' }, [
     ...presets.map((candidate: AspectRatio): HTMLLabelElement => chip(candidate.label, candidate.label)),
-    chip(VALUE_CUSTOM, 'Custom…'),
+    chip(VALUE_CUSTOM, 'Custom…')
   ])
 
   const customInput: HTMLInputElement = h('input', {
@@ -52,7 +49,7 @@ export function createField(options: FieldOptions): Field {
     autocomplete: 'off',
     spellcheck: 'false',
     'aria-label': `${legend}: custom ratio`,
-    'aria-describedby': noteId,
+    'aria-describedby': noteId
   })
   const note: HTMLParagraphElement = h('p', { id: noteId, class: 'custom__note' })
   const custom: HTMLDivElement = h('div', { class: 'custom' }, [customInput, note])
@@ -63,10 +60,9 @@ export function createField(options: FieldOptions): Field {
   const element: HTMLFieldSetElement = h('fieldset', { class: 'field' }, [
     h('legend', { class: 'field__legend' }, [legend, legendNote]),
     chips,
-    custom,
+    custom
   ])
 
-  // Only a pointer selection moves focus into the custom input; arrow-key users stay in the radio group.
   let selectingWithPointer: boolean = false
   chips.addEventListener('pointerdown', (): void => {
     selectingWithPointer = true
@@ -114,8 +110,7 @@ export function createField(options: FieldOptions): Field {
   }
 
   function focus(): void {
-    const radio: HTMLInputElement | undefined =
-      radios.find((candidate: HTMLInputElement): boolean => candidate.checked) ?? radios[0]
+    const radio: HTMLInputElement | undefined = radios.find((candidate: HTMLInputElement): boolean => candidate.checked) ?? radios[0]
     radio?.focus()
   }
 

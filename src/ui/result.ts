@@ -8,7 +8,6 @@ export interface ResultView {
   render(result: Result): void
 }
 
-/** Migration answer: current setup on the left, what to set on the new monitor on the right. */
 export function createResult(): ResultView {
   const factor: HTMLParagraphElement = h('p', { class: 'result__factor' })
   const percent: HTMLParagraphElement = h('p', { class: 'result__percent' })
@@ -20,7 +19,7 @@ export function createResult(): ResultView {
 
   const element: HTMLDivElement = h('div', { class: 'card result' }, [
     h('div', { class: 'result__current' }, [h('p', { class: 'caption' }, ['Your stretch now']), factor, percent, context]),
-    h('div', { class: 'result__target' }, [targetCaption, recommendedPreset, details]),
+    h('div', { class: 'result__target' }, [targetCaption, recommendedPreset, details])
   ])
 
   function render(result: Result): void {
@@ -42,7 +41,7 @@ export function createResult(): ResultView {
       details,
       result.isExactMatch
         ? 'Exact match'
-        : `Ideal ${result.idealDescription} · ${formatPercent(result.nearest.changePercent)} vs. current`,
+        : `Ideal ${result.idealDescription} · ${formatPercent(result.nearest.changePercent)} vs. current`
     )
   }
 

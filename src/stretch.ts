@@ -1,13 +1,12 @@
 import { GAME_PRESETS } from './presets'
 import { describeValue, type AspectRatio } from './ratio'
 
-/** Changes below this (in %) count as "current" / "exact match". */
 export const EXACT_MATCH_THRESHOLD: number = 0.05
 
 const AXIS_PADDING: number = 0.1
 const AXIS_ROUNDING: number = 10
-const TICK_STEPS: readonly number[] = [5, 10, 20, 25, 50, 100, 200, 250, 500]
-const LARGEST_TICK_STEP: number = 500
+const MIN_TICK_STEP: number = 5
+const NICE_MULTIPLIERS: readonly number[] = [1, 2, 2.5, 5, 10]
 
 export interface StretchInputs {
   readonly monitor: AspectRatio
@@ -66,7 +65,7 @@ export function compute(inputs: StretchInputs, presets: readonly AspectRatio[] =
       preset: candidate,
       stretchFactor: presetFactor,
       stretchPercent: toPercent(presetFactor),
-      changePercent: (presetFactor / factor - 1) * 100,
+      changePercent: (presetFactor / factor - 1) * 100
     }
   })
 
@@ -79,7 +78,7 @@ export function compute(inputs: StretchInputs, presets: readonly AspectRatio[] =
   })
 
   const comparisons: readonly PresetComparison[] = measured.map(
-    (entry: PresetMeasurement, index: number): PresetComparison => ({ ...entry, isHighlighted: index === nearestIndex }),
+    (entry: PresetMeasurement, index: number): PresetComparison => ({ ...entry, isHighlighted: index === nearestIndex })
   )
   const nearest: PresetComparison | undefined = comparisons[nearestIndex]
   if (nearest === undefined) throw new Error('At least one preset is required')
@@ -98,8 +97,8 @@ export function compute(inputs: StretchInputs, presets: readonly AspectRatio[] =
     comparisons,
     axis: axisDomain([
       stretchPercent,
-      ...comparisons.map((comparison: PresetComparison): number => comparison.stretchPercent),
-    ]),
+      ...comparisons.map((comparison: PresetComparison): number => comparison.stretchPercent)
+    ])
   }
 }
 
@@ -109,19 +108,36 @@ export function axisDomain(values: readonly number[]): Axis {
   const padding: number = (max - min) * AXIS_PADDING
   return {
     lo: Math.floor((min - padding) / AXIS_ROUNDING) * AXIS_ROUNDING,
-    hi: Math.ceil((max + padding) / AXIS_ROUNDING) * AXIS_ROUNDING,
+    hi: Math.ceil((max + padding) / AXIS_ROUNDING) * AXIS_ROUNDING
   }
 }
 
+export function isFiniteResult(result: Result): boolean {
+  return (
+    Number.isFinite(result.stretchFactor) &&
+    result.stretchFactor > 0 &&
+    Number.isFinite(result.idealRatio) &&
+    Number.isFinite(result.axis.lo) &&
+    Number.isFinite(result.axis.hi) &&
+    result.comparisons.every(
+      (comparison: PresetComparison): boolean =>
+        Number.isFinite(comparison.stretchPercent) && Number.isFinite(comparison.changePercent)
+    )
+  )
+}
+
 export function tickStep(axis: Axis, maxTicks: number): number {
-  const span: number = axis.hi - axis.lo
-  return TICK_STEPS.find((step: number): boolean => span / step <= maxTicks) ?? LARGEST_TICK_STEP
+  const rough: number = Math.max((axis.hi - axis.lo) / maxTicks, MIN_TICK_STEP)
+  const magnitude: number = 10 ** Math.floor(Math.log10(rough))
+  const multiplier: number =
+    NICE_MULTIPLIERS.find((candidate: number): boolean => candidate * magnitude >= rough) ?? 10
+  return multiplier * magnitude
 }
 
 export function tickValues(axis: Axis, step: number): number[] {
   const values: number[] = []
-  for (let value: number = Math.ceil(axis.lo / step) * step; value <= axis.hi; value += step) {
-    values.push(value === 0 ? 0 : value)
+  for (let index: number = Math.ceil(axis.lo / step); index * step <= axis.hi; index++) {
+    values.push(index === 0 ? 0 : index * step)
   }
   return values
 }

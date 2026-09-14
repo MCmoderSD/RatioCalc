@@ -2,8 +2,8 @@ import './style.css'
 import { GAME_PRESETS, MONITOR_PRESETS } from './presets'
 import { ERROR_FORMAT, parseRatio, type AspectRatio, type ParseResult } from './ratio'
 import { detectMonitor, readScreenSize, type DetectedMonitor, type ScreenSize } from './screen'
-import { stateFromQuery, stateToQuery, type RatioInput, type State } from './state'
-import { compute, type Result } from './stretch'
+import { DEFAULT_STATE, stateFromQuery, stateToQuery, type RatioInput, type State } from './state'
+import { compute, isFiniteResult, type Result } from './stretch'
 import { createCompareTable, type CompareTableView } from './ui/compareTable'
 import { createField, type Field, type FieldStatus } from './ui/controls'
 import { requireElement } from './ui/dom'
@@ -16,6 +16,7 @@ type Resolution =
   | { readonly valid: false; readonly status: FieldStatus }
 
 const IDLE: FieldStatus = { kind: 'idle' }
+const ERROR_EXTREME: string = 'This combination is too extreme to calculate'
 const NOT_MIGRATING: Resolution = { valid: true, ratio: null, status: IDLE }
 
 const screenSize: ScreenSize | null = readScreenSize()
@@ -33,7 +34,7 @@ const monitorField: Field = createField({
   legend: 'Current monitor',
   presets: MONITOR_PRESETS,
   initial: state.monitor,
-  onChange: (monitor: RatioInput): void => setState({ ...state, monitor }),
+  onChange: (monitor: RatioInput): void => setState({ ...state, monitor })
 })
 
 const gameField: Field = createField({
@@ -41,7 +42,7 @@ const gameField: Field = createField({
   legend: 'In-game aspect ratio',
   presets: GAME_PRESETS,
   initial: state.game,
-  onChange: (game: RatioInput): void => setState({ ...state, game }),
+  onChange: (game: RatioInput): void => setState({ ...state, game })
 })
 
 const targetField: Field = createField({
@@ -49,7 +50,7 @@ const targetField: Field = createField({
   legend: 'New monitor',
   presets: MONITOR_PRESETS,
   initial: state.target,
-  onChange: (target: RatioInput): void => setState({ ...state, target }),
+  onChange: (target: RatioInput): void => setState({ ...state, target })
 })
 
 const migration: MigrationView = createMigration(targetField, (migrating: boolean): void => setState({ ...state, migrating }))
@@ -61,7 +62,13 @@ requireElement('#number-line').append(numberLine.element)
 resultSection.append(resultView.element)
 requireElement('#compare').append(compareTable.element)
 
-update()
+if (!update()) {
+  state = { ...DEFAULT_STATE, monitor: detectedMonitor?.input ?? DEFAULT_STATE.monitor }
+  monitorField.select(state.monitor)
+  gameField.select(state.game)
+  targetField.select(state.target)
+  update()
+}
 
 function pickGamePreset(label: string): void {
   const game: RatioInput = { kind: 'preset', label }
@@ -74,7 +81,7 @@ function setState(next: State): void {
   update()
 }
 
-function update(): void {
+function update(): boolean {
   migration.setActive(state.migrating)
 
   const monitor: Resolution = resolveField(state.monitor, MONITOR_PRESETS, false)
@@ -85,19 +92,26 @@ function update(): void {
   gameField.setStatus(game.status)
   targetField.setStatus(target.status)
 
-  // Any invalid field keeps the last valid result on screen.
-  if (!monitor.valid || !game.valid || !target.valid) return
-  if (monitor.ratio === null || game.ratio === null) return
+  if (!monitor.valid || !game.valid || !target.valid) return false
+  if (monitor.ratio === null || game.ratio === null) return false
 
   const result: Result = compute({ monitor: monitor.ratio, game: game.ratio, target: target.ratio })
+  if (!isFiniteResult(result)) {
+    const extreme: FieldStatus = { kind: 'error', message: ERROR_EXTREME }
+    if (state.monitor.kind === 'custom') monitorField.setStatus(extreme)
+    if (state.game.kind === 'custom') gameField.setStatus(extreme)
+    if (state.migrating && state.target?.kind === 'custom') targetField.setStatus(extreme)
+    return false
+  }
+
   resultSection.hidden = result.target === null
   resultView.render(result)
   numberLine.render(result)
   compareTable.render(result)
   writeUrl()
+  return true
 }
 
-/** `optional`: an empty custom input is valid and means "nothing picked". */
 function resolveField(input: RatioInput | null, presets: readonly AspectRatio[], optional: boolean): Resolution {
   if (input === null) return { valid: true, ratio: null, status: IDLE }
 

@@ -25,9 +25,11 @@ Terms follow the glossary in [OVERVIEW.md](OVERVIEW.md#glossary).
 
 | Label | Value |
 |---|---|
-| `4:3` | 1.3333 |
 | `5:4` | 1.2500 |
+| `4:3` | 1.3333 |
+| `3:2` | 1.5000 |
 | `16:10` | 1.6000 |
+| `5:3` | 1.6667 |
 | `16:9` | 1.7778 |
 | `21:9` | 2.3333 |
 | `32:9` | 3.5556 |
@@ -55,12 +57,15 @@ Every field has a *Custom…* option with a free-text input. The input is trimme
 | Case | Result | Message |
 |---|---|---|
 | Matches no form | invalid | `Enter a ratio like 16:9, 2560x1440 or 1.78` |
-| Any part is `0`, or value not finite | invalid | `Values must be greater than 0` |
-| Value `< 0.5` or `> 5.0` | invalid | `Ratio must be between 0.5 and 5.0` |
+| Any part is `0` | invalid | `Values must be greater than 0` |
+| Value overflows to `Infinity` or underflows to `0` (e.g. a 400-digit number) | invalid | `This value is too large or too small to calculate` |
 | Empty **target** field | valid | – (means *no target*) |
 | Empty **monitor / game** custom field | invalid | `Enter a ratio like 16:9, 2560x1440 or 1.78` |
+| Valid inputs whose **combination** overflows (e.g. `10³⁰⁰:1` monitor with `1:10³⁰⁰` in-game) | invalid | `This combination is too extreme to calculate`, shown on every custom field |
 
+- **There is no minimum or maximum ratio.** Any finite value above 0 is accepted (`0.001`, `100:1`, `1:1000` …). Only the limits of floating-point numbers remain.
 - While a field is invalid, the page keeps showing the **last valid result**. Only the field shows its error.
+- If a shared link combines values that overflow, the page starts with the defaults instead of staying blank.
 
 ### Preset matching
 
@@ -133,6 +138,7 @@ Used to show a non-preset value as a readable ratio (e.g. `g_ideal = 1.200` → 
 ```text
 for d = 1 … 20:
     n = round(v × d)
+    if n > 100: return none          fractions like "10000:1" are not readable
     if n > 0 and |n / d − v| ≤ 0.005:
         return "n:d"
 return none
@@ -155,6 +161,19 @@ return none
 - Any percent with `|x| < 0.05` is shown as `±0.0%`.
 - Decimal separator is always `.` (English UI).
 
+### Very large and very small numbers
+
+Because ratios are unlimited, every number goes through one formatter:
+
+| Magnitude | Format | Examples |
+|---|---|---|
+| `≥ 10¹⁵` | exponential, 2 decimals | `×1.78e+18` |
+| `≥ 10⁶` | compact (en-US), max. 2 decimals | `×177.78M`, `+17.8B%` |
+| too small for the decimals (e.g. `< 0.0005` with 3 decimals) | 3 significant digits | `×1.00e-7`, `0.0000100` |
+| everything else | fixed decimals as in the table above | `×1.333`, `×10000.000` |
+
+- Axis tick labels switch to compact notation earlier, from `10⁴` (`+200K`, `+1M`), so they stay narrow.
+
 ## 7. Number line axis
 
 The number line plots stretch percent on the **effective monitor** `m_t`, on a linear x-axis.
@@ -173,9 +192,16 @@ x(v)   = (v − lo) / (hi − lo) × width
 
 ### Ticks
 
-- Step = the smallest value from `[5, 10, 20, 25, 50, 100, 200, 250, 500]` such that `(hi − lo) / step ≤ 10`. On narrow screens (< 768px) the limit is `≤ 5`.
-  - The larger steps cover extreme custom setups: at most ×10 = +900 % within the allowed 0.5–5.0 range.
-- Ticks sit at multiples of the step inside `[lo, hi]`.
+- Step = the smallest "nice" number (1, 2, 2.5 or 5 × 10ⁿ, at least `5`) such that `(hi − lo) / step ≤ 10`. On narrow screens (< 768px) the limit is `≤ 5`.
+
+  ```text
+  rough      = max((hi − lo) / maxTicks, 5)
+  magnitude  = 10 ^ floor(log10(rough))
+  step       = first of [1, 2, 2.5, 5, 10] × magnitude that is ≥ rough
+  ```
+
+  - This scales to any axis: `5, 10, 20, 25, 50, 100, 200, 250, 500, 1000, …, 2e10, …`.
+- Ticks sit at multiples of the step inside `[lo, hi]`. They are computed as `index × step`, not by repeatedly adding `step`, so large axes don't drift.
 - `0` is always drawn and labelled **Native**.
 
 ### Examples
@@ -184,6 +210,7 @@ x(v)   = (v − lo) / (hi − lo) × width
 |---|---|---|---|
 | 16:9 with 4:3, no target | −23.8 … +42.2 | −40 … +50 | 10 / 20 |
 | 16:9 with 5:4 → 32:9 | 0.0 … +184.4 | −20 … +210 | 25 / 50 |
+| 100:1 with 1:100 | 0.0 … +999900 | −99990 … +1099890 | 200000 (`+200K … +1M`) |
 
 ## 8. URL state
 
@@ -268,7 +295,7 @@ physical(css, scale):
 | 2560×1600 | 175 % | 1463×914 | 2560×1600 | 2560×1600 ✓ |
 | 3840×2160 | 250 % | 1536×864 | 3840×2160 | 3840×2160 ✓ |
 
-- If `width` or `height` is `0`, or `value` is outside `0.5 … 5.0`, detection is skipped and the default `16:9` is used.
+- If `width` or `height` is `0`, or `value` is not a finite number above 0, detection is skipped and the default `16:9` is used.
 - If a monitor preset is within **1 %** of `value` (`|preset − value| / preset ≤ 0.01`), that preset is selected.
 - Otherwise the resolution is selected as a custom input, e.g. `3440x1440`.
 - The monitor legend shows `Your screen: 2560×1440` whenever detection succeeded, even after the user picks another monitor.
@@ -276,7 +303,9 @@ physical(css, scale):
 | Screen | Selected |
 |---|---|
 | 1920×1080, 1366×768, 2560×1440 | `16:9` |
-| 1440×900, 1680×1050 | `16:10` |
+| 1440×900, 1680×1050, 2880×1800 | `16:10` |
+| 2256×1504, 3000×2000 | `3:2` |
+| 1280×768 | `5:3` |
 | 1280×1024 | `5:4` |
 | 1024×768 | `4:3` |
 | 3840×1080, 5120×1440 | `32:9` |

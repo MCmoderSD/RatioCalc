@@ -79,7 +79,7 @@ Example: 4:3 on a 16:9 monitor → `S = 1.333`, `+33.3%` stretched. Switching to
 
 ### Monitor presets
 
-`4:3` · `5:4` · `16:10` · `16:9` · `21:9` · `32:9`
+`5:4` · `4:3` · `3:2` · `16:10` · `5:3` · `16:9` · `21:9` · `32:9`
 
 ## User flows
 

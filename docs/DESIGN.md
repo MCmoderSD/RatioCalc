@@ -45,6 +45,18 @@ Helper and transition colors only. They are derived from the core colors and may
 
 **Rule:** text on a filled `--primary` surface uses `--bg` (`#0c0f16`), never white.
 
+## Scrollbar & selection
+
+- **Scrollbar** (page, table overflow and any other scroll container):
+  - Transparent track, so the page background shows through
+  - Rounded thumb in `--border`, inset 4px inside a 14px gutter, min. 48px tall
+  - Hover: `--text-muted`
+  - Dragging: `--primary`
+- **Browser support:**
+  - Chromium and Safari use `::-webkit-scrollbar`, which allows the hover and drag states.
+  - Firefox gets the standard `scrollbar-width: thin` and `scrollbar-color: var(--border) transparent`, applied only where `::-webkit-scrollbar` is unsupported. Chromium would otherwise let the standard properties override the richer styling.
+- **Text selection:** `--text-strong` on `--primary-border`.
+
 ## Typography
 
 - **Font stack:** `system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif`. No external fonts.
@@ -53,7 +65,8 @@ Helper and transition colors only. They are derived from the core colors and may
 | Role | Size | Weight | Color |
 |---|---|---|---|
 | Main stretch value | 48px | 700 | `--text-strong` |
-| Page title (24px on mobile) / recommended preset | 28px | 700 | `--text-strong` |
+| Page title (28px on mobile) | 36px | 700 | `--text-strong` |
+| Recommended preset, number-line factor | 28px | 700 | `--text-strong` |
 | Section title | 20px | 600 | `--text-strong` |
 | Body | 16px | 400 | `--text` |
 | Chips, table, hints | 14px | 400 / 600 | `--text` |
@@ -97,7 +110,7 @@ Rainbow Six Siege stretch calculator
 See your stretch, compare aspect ratio presets and keep your stretch on a new monitor.
 
 CURRENT MONITOR  Your screen: 2560×1440
-( 4:3 ) ( 5:4 ) ( 16:10 ) [ 16:9 ] ( 21:9 ) ( 32:9 ) ( Custom… )
+( 5:4 ) ( 4:3 ) ( 3:2 ) ( 16:10 ) ( 5:3 ) [ 16:9 ] ( 21:9 ) ( 32:9 ) ( Custom… )
 
 IN-GAME ASPECT RATIO
 ( 5:4 ) [ 4:3 ] ( 3:2 ) ( 16:10 ) ( 5:3 ) ( 16:9 ) ( 19:10 ) ( 21:9 ) ( Custom… )
@@ -135,7 +148,7 @@ Only the parts that change are shown.
 ```text
 ┌─────────────────────────────────────────────────────────────────┐
   NEW MONITOR
-  ( 4:3 ) ( 5:4 ) [ 16:10 ] ( 16:9 ) ( 21:9 ) ( 32:9 ) ( Custom… )
+  ( 5:4 ) ( 4:3 ) ( 3:2 ) [ 16:10 ] ( 5:3 ) ( 16:9 ) ( 21:9 ) ( 32:9 ) ( Custom… )
   Cancel migration
 └─────────────────────────────────────────────────────────────────┘
 
@@ -166,7 +179,7 @@ Presets on 16:10 (new monitor)
 ### Header
 
 - **No product name on the page.** *RatioCalc* is only the project name.
-- Title `Rainbow Six Siege stretch calculator` as `<h1>`: 28px (24px mobile) / 700, `--text-strong`.
+- Title `Rainbow Six Siege stretch calculator` as `<h1>`: 36px (28px mobile) / 700, `--text-strong`, letter-spacing −0.02em. At least 1.25× the 20px section titles, so the page has a clear top level.
 - Description `See your stretch, compare aspect ratio presets and keep your stretch on a new monitor.`: 16px, `--text`.
 - No navigation.
 
@@ -280,6 +293,8 @@ Presets on 16:10 (new monitor)
 - Content column max 680px, sections 32px apart, `<h2>` 20px / 600 `--text-strong`, body `--text`.
 - Inline code (URL examples) on `--surface-raised`, radius 4px.
 - Unfilled `[placeholders]` are shown in `--warning`, so they cannot go live unnoticed.
+- Contact email everywhere: `business@mcmodersd.de` as a `mailto:` link.
+- All external links (GitHub, GitHub docs) open in a new tab with `target="_blank" rel="noopener noreferrer"`. Internal links (calculator, imprint, privacy) stay in the same tab.
 - 14px, links `--text-muted` without underline, hover `--text-strong` with underline, gap 24px, wraps on narrow screens.
 
 ## States

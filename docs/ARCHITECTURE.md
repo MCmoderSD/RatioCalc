@@ -190,12 +190,22 @@ The HTML holds the static structure. TypeScript fills the sections.
 
 ## Deployment
 
-- A GitHub Actions workflow runs on every push to `main`:
-  1. `npm ci`
-  2. `npm run build`
-  3. Upload `dist/` as the Pages artifact and deploy it
+- [.github/workflows/publish.yml](../.github/workflows/publish.yaml) runs on every push to `master` or `main` and on manual dispatch (`workflow_dispatch`):
+  1. `build` job (read-only permissions): checkout, Node 24 with npm cache, `npm ci`, `npm run build` (includes the `tsc` type check), upload `dist/` as the Pages artifact
+  2. `deploy` job (`pages: write`, `id-token: write`): publish the artifact with `actions/deploy-pages` to the `github-pages` environment
+- Deployments share the `pages` concurrency group. A new push waits for a running deployment instead of cancelling it.
+- Repository settings:
+  - *Settings → Pages → Source: GitHub Actions*
+  - *Settings → Environments → github-pages → Deployment branches*: must include every branch that should deploy (currently only `master`)
 - `dist/` is never committed.
-- The workflow is set up in a later step.
+
+### Dependency updates
+
+- [.github/dependabot.yml](../.github/dependabot.yaml) checks two ecosystems weekly:
+  - `npm` – Vite, TypeScript and their dependencies; commit prefix `deps`
+  - `github-actions` – the actions used in the workflows; commit prefix `ci`
+- All updates of one ecosystem are grouped into a single pull request, with at most 5 open pull requests per ecosystem.
+- Merging a Dependabot pull request into `master` triggers a normal publish.
 
 ## Testing
 

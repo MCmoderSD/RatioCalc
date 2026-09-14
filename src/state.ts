@@ -8,9 +8,7 @@ export type RatioInput =
 export interface State {
   readonly monitor: RatioInput
   readonly game: RatioInput
-  /** Migration mode: the "new monitor" panel is open. */
   readonly migrating: boolean
-  /** The new monitor, or null while none is picked. Only used while migrating. */
   readonly target: RatioInput | null
 }
 
@@ -20,14 +18,13 @@ export const DEFAULT_STATE: State = {
   monitor: { kind: 'preset', label: '16:9' },
   game: { kind: 'preset', label: '16:9' },
   migrating: false,
-  target: null,
+  target: null
 }
 
 const PARAM_MONITOR: string = 'monitor'
 const PARAM_RATIO: string = 'ratio'
 const PARAM_TARGET: string = 'target'
 
-/** `fallbackMonitor` is used when the URL has no valid monitor, e.g. the detected screen. */
 export function stateFromQuery(search: string, fallbackMonitor: RatioInput = DEFAULT_STATE.monitor): State {
   const params: URLSearchParams = new URLSearchParams(search)
   const target: RatioInput | null = inputFromParam(params.get(PARAM_TARGET), MONITOR_PRESETS)
@@ -35,7 +32,7 @@ export function stateFromQuery(search: string, fallbackMonitor: RatioInput = DEF
     monitor: inputFromParam(params.get(PARAM_MONITOR), MONITOR_PRESETS) ?? fallbackMonitor,
     game: inputFromParam(params.get(PARAM_RATIO), GAME_PRESETS) ?? DEFAULT_STATE.game,
     migrating: target !== null,
-    target,
+    target
   }
 }
 
@@ -43,7 +40,7 @@ export function stateToQuery(state: State): string {
   const entries: readonly QueryEntry[] = [
     [PARAM_MONITOR, state.monitor],
     [PARAM_RATIO, state.game],
-    [PARAM_TARGET, state.migrating ? state.target : null],
+    [PARAM_TARGET, state.migrating ? state.target : null]
   ]
   return entries
     .flatMap(([name, input]: QueryEntry): string[] => {
@@ -66,7 +63,6 @@ function inputToParam(input: RatioInput | null): string | null {
   return value === '' ? null : value
 }
 
-/** Keeps ":" and "/" readable in the URL. */
 function encodeParam(value: string): string {
   return encodeURIComponent(value).replace(/%3A/gi, ':').replace(/%2F/gi, '/')
 }

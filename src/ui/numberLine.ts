@@ -51,29 +51,25 @@ const AXIS_Y: number = 92
 const TICK_LABEL_Y: number = 120
 const YOU_LINE_TOP: number = 22
 const YOU_LINE_BOTTOM: number = AXIS_Y + 8
-/** Distance above a preset label where "You" sits when the current stretch is that preset. */
 const YOU_ABOVE_LABEL: number = 16
-/** A dot closer than this to the current stretch counts as "you are here". */
 const COINCIDE_DISTANCE: number = 6
 const MIN_SEGMENT: number = 12
-/** Leader lines start this far above the dot centre. */
 const LEADER_OFFSET: number = 8
 const CHAR_WIDTH: number = 7
 const LABEL_GAP: number = 8
-/** Matches the tick fade-out duration in style.css. */
 const TICK_LEAVE_MS: number = 260
 const MOBILE_QUERY: string = '(max-width: 767px)'
 
 export function createNumberLine(
   presets: readonly AspectRatio[],
-  onPick: (label: string) => void,
+  onPick: (label: string) => void
 ): NumberLineView {
   const title: HTMLHeadingElement = h('h2', { id: 'number-line-title', class: 'section-title' })
   const summaryFactor: HTMLSpanElement = h('span', { class: 'number-line__factor' })
   const summaryPercent: HTMLSpanElement = h('span', { class: 'number-line__percent' })
   const header: HTMLDivElement = h('div', { class: 'number-line__header' }, [
     title,
-    h('p', { class: 'number-line__summary', 'aria-live': 'polite' }, [summaryFactor, summaryPercent]),
+    h('p', { class: 'number-line__summary', 'aria-live': 'polite' }, [summaryFactor, summaryPercent])
   ])
 
   const ticks: SVGGElement = svg('g', { class: 'nl-ticks' })
@@ -83,7 +79,7 @@ export function createNumberLine(
   const youPath: SVGPathElement = svg('path', { class: 'nl-you__line' })
   const youLine: SVGGElement = svg('g', { class: 'nl-you' }, [youPath])
   const youLabel: SVGGElement = svg('g', { class: 'nl-you' }, [
-    svg('text', { class: 'nl-you__label', y: 0, 'text-anchor': 'middle' }, ['You']),
+    svg('text', { class: 'nl-you__label', y: 0, 'text-anchor': 'middle' }, ['You'])
   ])
   const dotsGroup: SVGGElement = svg('g', { class: 'nl-dots' })
 
@@ -94,7 +90,7 @@ export function createNumberLine(
     stretched,
     youLine,
     dotsGroup,
-    youLabel,
+    youLabel
   ])
 
   const tooltipValue: HTMLSpanElement = h('span', { class: 'nl-tooltip__value' })
@@ -110,14 +106,13 @@ export function createNumberLine(
   const tickViews: Map<number, TickView> = new Map<number, TickView>()
 
   presets.forEach((candidate: AspectRatio): void => {
-    // Leader is a unit line scaled by CSS, so its length can animate.
     const leader: SVGLineElement = svg('line', {
       class: 'nl-dot__leader',
       x1: 0,
       y1: 0,
       x2: 0,
       y2: -1,
-      'vector-effect': 'non-scaling-stroke',
+      'vector-effect': 'non-scaling-stroke'
     })
     const label: SVGTextElement = svg('text', { class: 'nl-dot__label', 'text-anchor': 'middle' }, [candidate.label])
     const group: SVGGElement = svg('g', { class: 'nl-dot', tabindex: 0, role: 'button' }, [
@@ -127,7 +122,7 @@ export function createNumberLine(
       svg('circle', { class: 'nl-dot__focus', r: 12 }),
       svg('circle', { class: 'nl-dot__ring', r: 9 }),
       svg('circle', { class: 'nl-dot__dot', r: 5 }),
-      label,
+      label
     ])
 
     group.addEventListener('click', (): void => onPick(candidate.label))
@@ -151,8 +146,7 @@ export function createNumberLine(
     if (width <= 0) return
 
     const { lo, hi }: Axis = current.axis
-    const toX: (value: number) => number = (value: number): number =>
-      PADDING_X + ((value - lo) / (hi - lo)) * (width - 2 * PADDING_X)
+    const toX: (value: number) => number = (value: number): number => PADDING_X + ((value - lo) / (hi - lo)) * (width - 2 * PADDING_X)
 
     root.setAttribute('viewBox', `0 0 ${width} ${HEIGHT}`)
     axisLine.setAttribute('x1', String(PADDING_X))
@@ -167,17 +161,14 @@ export function createNumberLine(
       .map((comparison: PresetComparison): PlacedDot => ({ comparison, x: toX(comparison.stretchPercent) }))
       .sort((a: PlacedDot, b: PlacedDot): number => a.x - b.x)
 
-    // When the current stretch sits on a preset dot, "You" goes right above that preset's label instead of
-    // drawing a line through label and dot.
     const coincident: PlacedDot | null = placed.reduce<PlacedDot | null>(
       (best: PlacedDot | null, entry: PlacedDot): PlacedDot | null => {
         const distance: number = Math.abs(entry.x - youX)
         return distance < COINCIDE_DISTANCE && (best === null || distance < Math.abs(best.x - youX)) ? entry : best
       },
-      null,
+      null
     )
 
-    // Sort by position and put each label in the first row where it does not collide with its left neighbour.
     const rowEnds: [number, number] = [-Infinity, -Infinity]
     const labelBoxes: LabelBox[] = []
     let youPosition: Point = { x: clamp(youX, 16, width - 16), y: ZONE_Y }
@@ -198,7 +189,6 @@ export function createNumberLine(
       let row: 0 | 1
       if (isYou) {
         row = firstFree && secondFree ? 0 : secondFree ? 1 : 0
-        // "You" occupies the band above the label: the second row if the label is in the first, otherwise above both.
         const youInSecondRow: boolean = row === 0 && secondFree
         if (youInSecondRow) rowEnds[1] = labelX + span
         youPosition = { x: labelX, y: (youInSecondRow ? ROW_Y[0] : ROW_Y[1]) - YOU_ABOVE_LABEL }
@@ -223,14 +213,13 @@ export function createNumberLine(
     youLine.classList.toggle('is-hidden', coincident !== null)
 
     if (coincident === null) {
-      // Leave gaps wherever the line would cross a label or a dot.
       const blocked: Interval[] = [
         ...labelBoxes
           .filter((box: LabelBox): boolean => Math.abs(box.x - youX) <= box.halfWidth + 4)
           .map((box: LabelBox): Interval => [box.rowY - 13, box.rowY + 5]),
         ...placed
           .filter((entry: PlacedDot): boolean => Math.abs(entry.x - youX) <= 12)
-          .map((): Interval => [AXIS_Y - 12, AXIS_Y + 12]),
+          .map((): Interval => [AXIS_Y - 12, AXIS_Y + 12])
       ]
       youPath.setAttribute('d', lineSegments(YOU_LINE_TOP, YOU_LINE_BOTTOM, blocked))
     }
@@ -239,22 +228,21 @@ export function createNumberLine(
     const youHalfWidth: number = textWidth('You') / 2
     squished.classList.toggle(
       'is-hidden',
-      youInZoneRow && youPosition.x - youHalfWidth < textWidth('Squished') + LABEL_GAP,
+      youInZoneRow && youPosition.x - youHalfWidth < textWidth('Squished') + LABEL_GAP
     )
     stretched.classList.toggle(
       'is-hidden',
-      youInZoneRow && youPosition.x + youHalfWidth > width - textWidth('Stretched') - LABEL_GAP,
+      youInZoneRow && youPosition.x + youHalfWidth > width - textWidth('Stretched') - LABEL_GAP
     )
 
     root.setAttribute(
       'aria-label',
       `Presets on ${current.effectiveMonitor.label}. Your stretch ${formatPercent(current.stretchPercent)}. ` +
-        `Nearest preset ${current.nearest.preset.label}.`,
+        `Nearest preset ${current.nearest.preset.label}.`
     )
     positionTooltip()
   }
 
-  /** Keeps ticks keyed by value so they slide to their new position; new ones fade in, old ones fade out. */
   function drawTicks(values: readonly number[], toX: (value: number) => number): void {
     const visible: Set<number> = new Set<number>(values)
 
@@ -279,8 +267,8 @@ export function createNumberLine(
       const group: SVGGElement = svg('g', { class: 'nl-tick-group is-entering' }, [
         svg('line', { class: isZero ? 'nl-tick is-zero' : 'nl-tick', x1: 0, x2: 0, y1: AXIS_Y - size, y2: AXIS_Y + size }),
         svg('text', { class: isZero ? 'nl-text is-zero' : 'nl-text', x: 0, y: TICK_LABEL_Y, 'text-anchor': 'middle' }, [
-          isZero ? 'Native' : formatTick(value),
-        ]),
+          isZero ? 'Native' : formatTick(value)
+        ])
       ])
       group.style.transform = `translate(${x}px, 0px)`
       ticks.append(group)
@@ -305,7 +293,7 @@ export function createNumberLine(
     if (activeLabel === null || current === null) return
     const label: string = activeLabel
     const comparison: PresetComparison | undefined = current.comparisons.find(
-      (entry: PresetComparison): boolean => entry.preset.label === label,
+      (entry: PresetComparison): boolean => entry.preset.label === label
     )
     const position: DotPosition | undefined = positions.get(label)
     if (!comparison || !position) return
@@ -342,10 +330,6 @@ function textWidth(text: string): number {
   return text.length * CHAR_WIDTH
 }
 
-/**
- * SVG path for a vertical line from `top` to `bottom` at x = 0, with the blocked intervals cut out.
- * Stubs shorter than MIN_SEGMENT are dropped so no tiny dashes appear between a label and its dot.
- */
 function lineSegments(top: number, bottom: number, blocked: readonly Interval[]): string {
   const segments: string[] = []
   const sorted: Interval[] = [...blocked].sort((a: Interval, b: Interval): number => a[0] - b[0])

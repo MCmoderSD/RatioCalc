@@ -15,7 +15,6 @@ export function prefersReducedMotion(): boolean {
   return window.matchMedia(REDUCED_MOTION_QUERY).matches
 }
 
-/** Counts the number shown in `element` from its last value to `to`. The first call sets it directly. */
 export function tweenNumber(element: HTMLElement, to: number, format: (value: number) => string): void {
   const tween: Tween | undefined = tweens.get(element)
   if (tween === undefined || prefersReducedMotion()) {
@@ -43,7 +42,6 @@ export function tweenNumber(element: HTMLElement, to: number, format: (value: nu
   tween.frame = requestAnimationFrame(step)
 }
 
-/** Sets the text and briefly fades it in when it actually changed. */
 export function setTextWithPulse(element: HTMLElement, text: string): void {
   if (element.textContent === text) return
   const hadText: boolean = element.textContent !== ''
@@ -61,7 +59,7 @@ export function pop(element: Element): void {
   if (prefersReducedMotion()) return
   const keyframes: Keyframe[] = [
     { opacity: 0, transform: 'scale(0.9)' },
-    { opacity: 1, transform: 'scale(1)' },
+    { opacity: 1, transform: 'scale(1)' }
   ]
   element.animate(keyframes, { duration: POP_DURATION, easing: EASE_OUT })
 }

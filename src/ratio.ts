@@ -10,15 +10,13 @@ export type ParseResult =
   | { readonly ok: true; readonly ratio: AspectRatio }
   | { readonly ok: false; readonly error: string }
 
-export const MIN_RATIO: number = 0.5
-export const MAX_RATIO: number = 5
-
 export const ERROR_FORMAT: string = 'Enter a ratio like 16:9, 2560x1440 or 1.78'
 export const ERROR_POSITIVE: string = 'Values must be greater than 0'
-export const ERROR_RANGE: string = 'Ratio must be between 0.5 and 5.0'
+export const ERROR_OUT_OF_RANGE: string = 'This value is too large or too small to calculate'
 
 const PRESET_TOLERANCE: number = 1e-6
 const FRACTION_MAX_DENOMINATOR: number = 20
+const FRACTION_MAX_NUMERATOR: number = 100
 const FRACTION_TOLERANCE: number = 0.005
 
 const PAIR_PATTERN: RegExp = /^(\d+(?:[.,]\d+)?)\s*[:/xX×]\s*(\d+(?:[.,]\d+)?)$/
@@ -28,6 +26,10 @@ export function preset(width: number, height: number): AspectRatio {
   return { label: `${width}:${height}`, value: width / height, isPreset: true }
 }
 
+export function isUsableRatio(value: number): boolean {
+  return Number.isFinite(value) && value > 0
+}
+
 export function matchPreset(value: number, presets: readonly AspectRatio[]): AspectRatio | undefined {
   return presets.find((candidate: AspectRatio): boolean => Math.abs(candidate.value - value) < PRESET_TOLERANCE)
 }
@@ -35,6 +37,7 @@ export function matchPreset(value: number, presets: readonly AspectRatio[]): Asp
 export function approximateFraction(value: number): string | null {
   for (let denominator: number = 1; denominator <= FRACTION_MAX_DENOMINATOR; denominator++) {
     const numerator: number = Math.round(value * denominator)
+    if (numerator > FRACTION_MAX_NUMERATOR) return null
     if (numerator > 0 && Math.abs(numerator / denominator - value) <= FRACTION_TOLERANCE) {
       return `${numerator}:${denominator}`
     }
@@ -42,7 +45,6 @@ export function approximateFraction(value: number): string | null {
   return null
 }
 
-/** "1.778 (16:9)", "1.200 (≈ 6:5)" or just "1.234". */
 export function describeValue(value: number, presets: readonly AspectRatio[]): string {
   const match: AspectRatio | undefined = matchPreset(value, presets)
   if (match) return `${formatRatio(value)} (${match.label})`
@@ -62,17 +64,17 @@ export function parseRatio(raw: string, presets: readonly AspectRatio[]): ParseR
     value = width / height
   } else if (DECIMAL_PATTERN.test(text)) {
     value = toNumber(text)
+    if (value <= 0) return failure(ERROR_POSITIVE)
   } else {
     return failure(ERROR_FORMAT)
   }
 
-  if (!Number.isFinite(value) || value <= 0) return failure(ERROR_POSITIVE)
-  if (value < MIN_RATIO || value > MAX_RATIO) return failure(ERROR_RANGE)
+  if (!isUsableRatio(value)) return failure(ERROR_OUT_OF_RANGE)
 
   const ratio: AspectRatio = matchPreset(value, presets) ?? {
     label: describeValue(value, []),
     value,
-    isPreset: false,
+    isPreset: false
   }
   return { ok: true, ratio }
 }

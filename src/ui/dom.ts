@@ -6,7 +6,7 @@ const SVG_NAMESPACE: 'http://www.w3.org/2000/svg' = 'http://www.w3.org/2000/svg'
 export function h<K extends keyof HTMLElementTagNameMap>(
   tag: K,
   attributes: Attributes = {},
-  children: readonly Child[] = [],
+  children: readonly Child[] = []
 ): HTMLElementTagNameMap[K] {
   const element: HTMLElementTagNameMap[K] = document.createElement(tag)
   setAttributes(element, attributes)
@@ -17,7 +17,7 @@ export function h<K extends keyof HTMLElementTagNameMap>(
 export function svg<K extends keyof SVGElementTagNameMap>(
   tag: K,
   attributes: Attributes = {},
-  children: readonly Child[] = [],
+  children: readonly Child[] = []
 ): SVGElementTagNameMap[K] {
   const element: SVGElementTagNameMap[K] = document.createElementNS(SVG_NAMESPACE, tag)
   setAttributes(element, attributes)
