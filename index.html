@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Rainbow Six Siege stretch calculator: see your stretch, compare aspect ratio presets and keep your stretch on a new monitor." />
+    <meta name="theme-color" content="#0c0f16" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>Rainbow Six Siege Stretch Calculator</title>
+  </head>
+  <body>
+    <div class="page">
+      <header class="header">
+        <h1 class="title">Rainbow Six Siege stretch calculator</h1>
+        <p class="tagline">See your stretch, compare aspect ratio presets and keep your stretch on a new monitor.</p>
+      </header>
+
+      <main id="app" class="app">
+        <section id="setup" class="setup" aria-label="Setup"></section>
+        <section id="number-line" aria-labelledby="number-line-title"></section>
+        <section id="result" aria-label="Result" aria-live="polite"></section>
+        <section id="compare" aria-labelledby="compare-title"></section>
+      </main>
+
+      <section class="explainer" aria-labelledby="explainer-title">
+        <h2 id="explainer-title" class="explainer__title">How it's calculated:</h2>
+        <p>
+          Stretch = monitor ratio ÷ in-game ratio. Positive values are stretched, negative values are squished.
+          <a href="https://github.com/MCmoderSD/RatioCalc/blob/main/docs/LOGIC.md">Details</a>
+        </p>
+      </section>
+
+      <footer class="footer">
+        <a href="imprint/">Imprint</a>
+        <a href="privacy/">Privacy Policy</a>
+        <a href="https://github.com/MCmoderSD/RatioCalc">GitHub</a>
+      </footer>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
