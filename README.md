@@ -50,7 +50,7 @@ Open [localhost:5173/RatioCalc/](http://localhost:5173/RatioCalc/).
 
 ## Deployment
 
-Every push to `master` or `main` runs [.github/workflows/publish.yml](.github/workflows/publish.yaml), which type-checks, builds the site and publishes `dist/` to GitHub Pages. It can also be started manually from the *Actions* tab.
+Every push to `master` or `main` runs [.github/workflows/publish.yaml](.github/workflows/publish.yaml), which type-checks, builds the site and publishes `dist/` to GitHub Pages. It can also be started manually from the *Actions* tab.
 
 [Dependabot](.github/dependabot.yaml) checks npm packages and GitHub Actions weekly and opens one grouped pull request per ecosystem.
 
